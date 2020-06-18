@@ -1,6 +1,3 @@
 <resources>
     <string name="app_name">beagoodgolfer</string>
-    <string name="test">test</string>
-    <string name="analyze">analyze</string>
-    <string name="reset">reset</string>
 </resources>
