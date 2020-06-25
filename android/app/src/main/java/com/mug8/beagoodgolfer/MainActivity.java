@@ -1,6 +1,10 @@
 package com.mug8.beagoodgolfer;
 
 import android.graphics.Bitmap;
+import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.Paint;
+import android.graphics.Rect;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
@@ -12,6 +16,7 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import java.io.File;
 import java.io.FileOutputStream;
+import java.util.List;
 
 import okhttp3.MediaType;
 import okhttp3.MultipartBody;
@@ -65,11 +70,7 @@ public class MainActivity extends AppCompatActivity {
     public void clickReset(View view) {
         Log.d(Constant.TAG, "clickReset");
 
-        String[] files = this.getApplicationContext().fileList();
-
-        for (String file: files) {
-            Log.d(Constant.TAG, file);
-        }
+        exampleIv.setImageBitmap(exampleBm);
     }
 
     private void initRetrofit() {
@@ -92,6 +93,33 @@ public class MainActivity extends AppCompatActivity {
         public void onResponse(Call<AnalyzeResponse> call, Response<AnalyzeResponse> response) {
             AnalyzeResponse result = response.body();
             Log.d(Constant.TAG, result.message);
+
+            // Set paintDot
+            Paint paintDot = new Paint();
+            paintDot.setAntiAlias(true);
+            paintDot.setColor(Color.BLUE);
+
+            // Set paintRect
+            Paint paintRect = new Paint();
+            paintRect.setAntiAlias(true);
+            paintDot.setColor(Color.RED);
+
+            // Set bitmap
+            Bitmap workingBitmap = Bitmap.createBitmap(exampleBm);
+            Bitmap mutableBitmap = workingBitmap.copy(Bitmap.Config.ARGB_8888, true);
+
+            // Set canvas and draw something
+            Canvas canvas = new Canvas(mutableBitmap);
+            canvas.drawCircle(0, 0, 25, paintDot);
+            canvas.drawCircle(50, 50, 25, paintDot);
+            canvas.drawCircle(100, 100, 25, paintDot);
+
+            List<Double> r = result.results.get(0).bbox;
+            Rect rect = new Rect(r.get(0).intValue(), r.get(1).intValue(), r.get(0).intValue() + r.get(2).intValue(), r.get(1).intValue() + r.get(3).intValue());
+            canvas.drawRect(rect, paintDot);
+
+            // Replace image
+            exampleIv.setImageBitmap(mutableBitmap);
         }
 
         @Override
