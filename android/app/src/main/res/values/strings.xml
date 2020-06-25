@@ -3,4 +3,5 @@
     <string name="test">test</string>
     <string name="analyze">analyze</string>
     <string name="reset">reset</string>
+    <string name="show_raw">raw</string>
 </resources>

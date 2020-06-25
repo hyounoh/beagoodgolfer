@@ -11,6 +11,7 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.ImageView;
+import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -29,13 +30,24 @@ import retrofit2.converter.gson.GsonConverterFactory;
 
 public class MainActivity extends AppCompatActivity {
 
+    // APIs
     Retrofit retrofit;
     RetrofitAPI retrofitAPI;
     Call<AnalyzeResponse> callPoseImageTest;
 
+    // Images
     ImageView exampleIv;
     Drawable exampleDr;
     Bitmap exampleBm;
+    File imageFile;
+
+    // Flags
+    Boolean isShowRaw = false;
+    int retryCount = 0;
+    int RETRY_COUNT_MAX = 5;
+
+    // Components
+    TextView tvRaw;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -47,30 +59,44 @@ public class MainActivity extends AppCompatActivity {
         exampleIv = findViewById(R.id.iv_example);
         exampleDr = exampleIv.getDrawable();
         exampleBm = ((BitmapDrawable) exampleDr).getBitmap();
-    }
 
-    public void clickAnalyze(View view) {
-        Log.d(Constant.TAG, "clickAnalyze");
+        tvRaw = findViewById(R.id.tv_raw);
 
+        // Store test image file into internal storage
         try {
-            File imageFile = new File(this.getApplicationContext().getFilesDir(), "example.PNG");
+            imageFile = new File(this.getApplicationContext().getFilesDir(), "example.PNG");
             FileOutputStream outStream = new FileOutputStream(imageFile);
             exampleBm.compress(Bitmap.CompressFormat.PNG, 100, outStream);
             outStream.flush();
             outStream.close();
             Log.d(Constant.TAG, "Success to store image");
-
-            callPoseImageTest(imageFile);
-            Log.d(Constant.TAG, "Call pose image test");
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    public void clickAnalyze(View view) {
+        Log.d(Constant.TAG, "clickAnalyze");
+
+        callPoseImageTest(imageFile);
     }
 
     public void clickReset(View view) {
         Log.d(Constant.TAG, "clickReset");
 
         exampleIv.setImageBitmap(exampleBm);
+    }
+
+    public void clickShowRaw(View view) {
+        Log.d(Constant.TAG, "clickShowRaw");
+
+        if (isShowRaw) {
+            tvRaw.setVisibility(View.INVISIBLE);
+        } else {
+            tvRaw.setVisibility(View.VISIBLE);
+        }
+
+        isShowRaw = !isShowRaw;
     }
 
     private void initRetrofit() {
@@ -91,32 +117,50 @@ public class MainActivity extends AppCompatActivity {
     private Callback<AnalyzeResponse> retrofitCallback = new Callback<AnalyzeResponse>() {
         @Override
         public void onResponse(Call<AnalyzeResponse> call, Response<AnalyzeResponse> response) {
-            AnalyzeResponse result = response.body();
-            Log.d(Constant.TAG, result.message);
+            Log.d(Constant.TAG, "onResponse");
 
-            // Set paintDot
-            Paint paintDot = new Paint();
-            paintDot.setAntiAlias(true);
-            paintDot.setColor(Color.BLUE);
+            AnalyzeResponse result = response.body();
+
+            // Set paintCircle
+            Paint paintCircle = new Paint();
+            paintCircle.setAntiAlias(true);
+            paintCircle.setColor(Color.GREEN);
 
             // Set paintRect
             Paint paintRect = new Paint();
             paintRect.setAntiAlias(true);
-            paintDot.setColor(Color.RED);
+            paintRect.setColor(Color.BLUE);
+            paintRect.setStyle(Paint.Style.STROKE);
+            paintRect.setStrokeWidth(3.0f);
+
+            // Set paintPoint
+            Paint paintPoint = new Paint();
+            paintPoint.setAntiAlias(true);
+            paintPoint.setColor(Color.RED);
+            paintPoint.setStrokeWidth(5.0f);
 
             // Set bitmap
             Bitmap workingBitmap = Bitmap.createBitmap(exampleBm);
             Bitmap mutableBitmap = workingBitmap.copy(Bitmap.Config.ARGB_8888, true);
 
-            // Set canvas and draw something
+            // Set canvas
             Canvas canvas = new Canvas(mutableBitmap);
-            canvas.drawCircle(0, 0, 25, paintDot);
-            canvas.drawCircle(50, 50, 25, paintDot);
-            canvas.drawCircle(100, 100, 25, paintDot);
 
-            List<Double> r = result.results.get(0).bbox;
-            Rect rect = new Rect(r.get(0).intValue(), r.get(1).intValue(), r.get(0).intValue() + r.get(2).intValue(), r.get(1).intValue() + r.get(3).intValue());
-            canvas.drawRect(rect, paintDot);
+            // Draw bbox
+            List<Double> coordBbox = result.results.get(0).bbox;
+            Rect rect = new Rect(
+                    coordBbox.get(0).intValue(),
+                    coordBbox.get(1).intValue(),
+                    coordBbox.get(0).intValue() + coordBbox.get(2).intValue(),
+                    coordBbox.get(1).intValue() + coordBbox.get(3).intValue()
+            );
+            canvas.drawRect(rect, paintRect);
+
+            // Draw points
+            List<Double> coordPoint = result.results.get(0).keypoints;
+            for (int i = 0; i < coordPoint.size(); i += 3) {
+                canvas.drawPoint(coordPoint.get(i).floatValue(), coordPoint.get(i + 1).floatValue(), paintPoint);
+            }
 
             // Replace image
             exampleIv.setImageBitmap(mutableBitmap);
@@ -124,7 +168,15 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         public void onFailure(Call<AnalyzeResponse> call, Throwable t) {
-            t.printStackTrace();
+            if (retryCount < RETRY_COUNT_MAX) {
+                Log.d(Constant.TAG, "onFailure - retry " + retryCount);
+                retryCount++;
+                callPoseImageTest(imageFile);
+            } else {
+                retryCount = 0;
+                t.printStackTrace();
+            }
+
         }
     };
 }

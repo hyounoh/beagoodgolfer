@@ -10,6 +10,7 @@
         android:id="@+id/iv_example"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:background="@color/colorAccent"
         android:contentDescription="@string/test"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -33,9 +34,30 @@
         android:layout_height="wrap_content"
         android:onClick="clickReset"
         android:text="@string/reset"
-        app:layout_constraintTop_toBottomOf="@+id/iv_example"
-        app:layout_constraintStart_toEndOf="@+id/btn_analyze"
-        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintBottom_toBottomOf="parent"
-        />
+        app:layout_constraintEnd_toStartOf="@+id/btn_show_raw"
+        app:layout_constraintStart_toEndOf="@+id/btn_analyze"
+        app:layout_constraintTop_toBottomOf="@+id/iv_example" />
+
+    <Button
+        android:id="@+id/btn_show_raw"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:onClick="clickShowRaw"
+        android:text="@string/show_raw"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@+id/btn_reset"
+        app:layout_constraintTop_toBottomOf="@+id/iv_example" />
+
+    <TextView
+        android:id="@+id/tv_raw"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:background="@color/colorAccent"
+        android:visibility="invisible"
+        app:layout_constraintBottom_toBottomOf="@id/iv_example"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
 </androidx.constraintlayout.widget.ConstraintLayout>
