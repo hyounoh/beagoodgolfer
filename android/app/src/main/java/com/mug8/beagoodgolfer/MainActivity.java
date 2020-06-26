@@ -164,6 +164,9 @@ public class MainActivity extends AppCompatActivity {
 
             // Replace image
             exampleIv.setImageBitmap(mutableBitmap);
+
+            // Replace raw text view
+            tvRaw.setText(result.toString());
         }
 
         @Override
